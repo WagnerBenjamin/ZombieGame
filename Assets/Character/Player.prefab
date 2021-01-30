@@ -215,7 +215,8 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 256
-  HUDPrefab: {fileID: 923510601791226156, guid: 1c387c532ee286d478078ca0cf15a11b, type: 3}
+  PlayerHUDPrefab: {fileID: 923510601791226156, guid: 1c387c532ee286d478078ca0cf15a11b, type: 3}
+  PauseHUDPrefab: {fileID: 7575264825024839247, guid: a004c41f58cb135409b1feb0b5f2bd5c, type: 3}
   gunHold: {fileID: 8744493263382422849}
   shootingPos:
   - {fileID: 4844064333180662404}

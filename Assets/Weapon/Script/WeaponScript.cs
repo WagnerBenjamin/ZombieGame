@@ -1,18 +1,34 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
 public class WeaponScript : MonoBehaviour
 {
     int ammoLeft;
+    public int AmmoLeft
+    {
+        get
+        {
+            return ammoLeft;
+        }
+        set
+        {
+            ammoLeft = value;
+            if(owningPlayer)
+                owningPlayer.playerHUDScript.UpdateGunAmmo(AmmoMax, ammoLeft);
+        }
+    }
     float nextFireTime;
     float spreadPercent;
-    Camera playerCam;
-    bool isAiming = false;
+    PlayerScript owningPlayer;
+    bool isAiming;
+    bool Reloading;
 
     AudioSource audioData;    
 
+    [Header("Gun Property")]
     [SerializeField]
     int AmmoMax;
     [SerializeField]
@@ -22,19 +38,21 @@ public class WeaponScript : MonoBehaviour
     [SerializeField]
     int Damage;
     [SerializeField]
-    Transform ShootingPoint;
-    [SerializeField]
     float SpreadAdd;
+    [SerializeField]
+    float recoilAdd;
     [Header("Audio")]
     [SerializeField]
     AudioClip shootFx;
     [SerializeField]
     AudioClip reloadFx;
+    [SerializeField]
+    Camera SightCamera;
 
     // Start is called before the first frame update
     void Start()
     {
-        ammoLeft = AmmoMax;
+        AmmoLeft = AmmoMax;
         audioData = GetComponent<AudioSource>();
     }
 
@@ -51,14 +69,13 @@ public class WeaponScript : MonoBehaviour
         }
     }
 
-    public Transform GetShootingPoint()
+    public async void Reload()
     {
-        return ShootingPoint;
-    }
-
-    public void Reload()
-    {
-        throw new System.NotImplementedException();
+        Reloading = true;
+        await Task.Delay(System.TimeSpan.FromSeconds(ReloadTime));
+        AmmoLeft = AmmoMax;
+        audioData.PlayOneShot(reloadFx);
+        Reloading = false;
     }
 
     public void SetAimingMode(bool adsMode)
@@ -68,11 +85,12 @@ public class WeaponScript : MonoBehaviour
 
     public bool Shoot()
     {
-        if(Time.time > nextFireTime)
+        if(Time.time > nextFireTime && AmmoLeft > 0 && !Reloading)
         {
             //Info de base du tir
-            Vector3 camCenter = playerCam.ScreenToWorldPoint(new Vector3(playerCam.pixelWidth * 0.5f, playerCam.pixelHeight * 0.5f));
-            Vector3 shootDir = playerCam.transform.forward;
+            Camera camToUse = isAiming ? SightCamera : owningPlayer.playerCamera;
+            Vector3 camCenter = camToUse.ScreenToWorldPoint(new Vector3(camToUse.pixelWidth * 0.5f, camToUse.pixelHeight * 0.5f));
+            Vector3 shootDir = camToUse.transform.forward;
 
             //Si on ne vise pas, alors on donne un angle aléatoire basé sur le spreadPercent
             if(!isAiming)
@@ -93,6 +111,13 @@ public class WeaponScript : MonoBehaviour
 
             audioData.PlayOneShot(shootFx);
 
+            if (isAiming)
+            {
+                owningPlayer.AddRecoil(recoilAdd);
+            }
+
+            AmmoLeft--;
+
             //Tir
             Ray ray = new Ray(camCenter, shootDir);
             if(Physics.Raycast(ray, out RaycastHit raycastHit))
@@ -108,14 +133,19 @@ public class WeaponScript : MonoBehaviour
         return false;
     }
 
+    public Camera GetSightCamera()
+    {
+        return SightCamera;
+    }
+
     public int GetRemainingAmmo()
     {
-        throw new System.NotImplementedException();
+        return AmmoLeft;
     }
 
     public int GetMaxAmmo()
     {
-        throw new System.NotImplementedException();
+        return AmmoMax;
     }
 
     public float GetSpread()
@@ -123,8 +153,8 @@ public class WeaponScript : MonoBehaviour
         return spreadPercent;
     }
 
-    public void SetCamera(Camera camera)
+    public void SetOwningPlayer(PlayerScript player)
     {
-        playerCam = camera;
+        owningPlayer = player;
     }
 }

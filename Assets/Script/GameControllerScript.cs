@@ -11,18 +11,22 @@ public class GameControllerScript : MonoBehaviour
     bool waveStarted;
     float timeBeforeNextSpawn;
 
-    [SerializeField]
-    int maxZombie;
-    public int getMaxZombie
-    {
-        get { return maxZombie; }
+    public bool gamePaused { get; private set; }
+    public int round { get; private set; }
+    public List<GameObject> SpawnedZombie { get; private set; }
+    public int MaxZombie 
+    { 
+        get 
+        { 
+            return maxZombie; 
+        } 
+        private set 
+        { 
+            maxZombie = value; 
+        } 
     }
 
-    List<GameObject> SpawnedZombie;
-    public int getSpawnedZombieCount
-    {
-        get { return SpawnedZombie.Count; }
-    }
+    public int playerPoint { get; private set; }
 
     [SerializeField]
     Transform[] Spawners;
@@ -30,11 +34,14 @@ public class GameControllerScript : MonoBehaviour
     GameObject Zombie;
     [SerializeField]
     public Camera GameCam;
+    [SerializeField]
+    int maxZombie;
 
     // Start is called before the first frame update
     void Start()
     {
         SpawnedZombie = new List<GameObject>();
+        round = 1;
     }
 
     // Update is called once per frame
@@ -43,19 +50,13 @@ public class GameControllerScript : MonoBehaviour
         if(SpawnedZombie.Count == 0 && !waveStarted)
         {
             waveStarted = true;
-            try
-            {
-                spawnZombie(ThreadingUtility.QuitToken);
-            }
-            catch(Exception e)
-            {
-                Debug.Log(e);
-            }
+            spawnZombie(ThreadingUtility.QuitToken);
         }
         else if(SpawnedZombie.Count == 0 && waveStarted)
         {
             waveStarted = false;
             maxZombie = (int)Math.Floor(1.5f * maxZombie);
+            round++;
         }
     }
 
@@ -78,5 +79,31 @@ public class GameControllerScript : MonoBehaviour
     public void removeDeadZombieFromList(GameObject deadzombie)
     {
         SpawnedZombie.Remove(deadzombie);
+    }
+
+    public int getRound()
+    {
+        return round;
+    }
+
+    public void AddPointToPlayer(PlayerScript player, int pointToAdd)
+    {
+        playerPoint += pointToAdd;
+    }
+
+    public void PauseControl()
+    {
+        Time.timeScale = gamePaused ? 1 : 0;
+        gamePaused = !gamePaused;
+
+        foreach(PlayerScript pScript in FindObjectsOfType(typeof(PlayerScript)))
+        {
+            pScript.ShowPauseMenu();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        Time.timeScale = 1;
     }
 }

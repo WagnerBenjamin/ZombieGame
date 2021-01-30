@@ -8,16 +8,18 @@ public class PlayerScript : MonoBehaviour
     CharacterController CController;
 
     float xRotation;
+    float xRecoilRotation;
     bool isGrounded;
     bool isSprinting;
     float gravity = -9.8f;
     int playerHealth = 100;
     bool isDead;
     GameControllerScript gcs;
-    bool gamePaused;
 
-    PlayerHUDScript playerHUD;
-    Camera playerCamera;
+    Canvas playerHUD;
+    public PlayerHUDScript playerHUDScript { get; private set; }
+    Canvas pauseHUD;
+    public Camera playerCamera { get; private set; }
     GameObject gunInHand;
     WeaponScript gunInHandScript;
 
@@ -29,7 +31,9 @@ public class PlayerScript : MonoBehaviour
     [SerializeField]
     LayerMask groundMask;
     [SerializeField]
-    Canvas HUDPrefab;
+    Canvas PlayerHUDPrefab;
+    [SerializeField]
+    Canvas PauseHUDPrefab;
     [SerializeField]
     GameObject gunHold;
     [SerializeField]
@@ -53,10 +57,11 @@ public class PlayerScript : MonoBehaviour
     [SerializeField]
     float interactionDistance;
 
-
-    private float lerpGun;
+    private float recoilSpeed = 0.1f;
+    private float RecoilTime;
     private float aimSpeed = 6;
     private bool isAiming = false;
+    private float lerpGun;
     private float LerpGun
     {
         get { return lerpGun; }
@@ -66,6 +71,11 @@ public class PlayerScript : MonoBehaviour
             {
                 lerpGun = 1;
                 isAiming = true;
+                if(gunInHandScript)
+                {
+                    playerCamera.enabled = false;
+                    gunInHandScript.GetSightCamera().enabled = true;
+                }
             }
             else if (value < 0)
             {
@@ -76,9 +86,14 @@ public class PlayerScript : MonoBehaviour
             {
                 lerpGun = value;
                 isAiming = false;
+                if (gunInHandScript)
+                {
+                    gunInHandScript.GetSightCamera().enabled = false;
+                    playerCamera.enabled = true;
+                }
             }
 
-            playerHUD?.ShowCrosshair(!isAiming);
+            playerHUDScript?.ShowCrosshair(!isAiming);
             gunInHandScript?.SetAimingMode(isAiming);
         }
     }
@@ -90,7 +105,10 @@ public class PlayerScript : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         CController = GetComponent<CharacterController>();
         playerHealth = playerHealthMax;
-        playerHUD = Instantiate(HUDPrefab).GetComponent<PlayerHUDScript>();
+        playerHUD = Instantiate(PlayerHUDPrefab);
+        playerHUDScript = playerHUD.GetComponent<PlayerHUDScript>();
+        pauseHUD = Instantiate(PauseHUDPrefab);
+        pauseHUD.enabled = false;
         playerCamera = GetComponentInChildren<Camera>();
         ChangeWeapon(baseWeapon);
     }
@@ -136,10 +154,11 @@ public class PlayerScript : MonoBehaviour
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
-        xRotation -= mouseY;
+        float tt = xRecoilRotation * recoilSpeed;
+        xRecoilRotation -= tt;
+        xRotation -= mouseY + tt;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0, 0f);
-        //gunHold.transform.localRotation = Quaternion.Euler(0f, -90f, -xRotation);
 
         transform.Rotate(Vector3.up * mouseX);
     }
@@ -148,7 +167,7 @@ public class PlayerScript : MonoBehaviour
     {
         if (gunInHand)
         {
-            playerHUD.SetCrosshairSize(gunInHandScript.GetSpread());
+            playerHUDScript.SetCrosshairSize(gunInHandScript.GetSpread());
 
             //Transform shootingPoint = gunInHandScript.GetShootingPoint();
             //Ray ray = new Ray(shootingPoint.position, shootingPoint.forward);
@@ -194,10 +213,10 @@ public class PlayerScript : MonoBehaviour
             isDead = true;
             GetComponentInChildren<Camera>().enabled = false;
             gcs.GameCam.enabled = true;
-            playerHUD.ShowCrosshair(false);
+            playerHUDScript.ShowCrosshair(false);
             enabled = false;
         }
-        playerHUD.UpdateHealth(playerHealth, playerHealthMax);
+        playerHUDScript.UpdateHealth(playerHealth, playerHealthMax);
     }
 
     private void ChangeWeapon(GameObject newWeapon)
@@ -207,7 +226,8 @@ public class PlayerScript : MonoBehaviour
         {
             gunInHand = Instantiate(newWeapon, gunHold.transform);
             gunInHandScript = gunInHand.GetComponent<WeaponScript>();
-            gunInHandScript.SetCamera(playerCamera);
+            gunInHandScript.SetOwningPlayer(this);
+            playerHUDScript.UpdateGunAmmo(true, gunInHandScript.GetMaxAmmo(), gunInHandScript.GetRemainingAmmo());
         }
     }
 
@@ -231,13 +251,13 @@ public class PlayerScript : MonoBehaviour
         {
             if (objectInFrontOfPlayer.TryGetComponent<WallWeaponScript>(out WallWeaponScript wallWeapon))
             {
-                playerHUD.SetTextUnderCrosshair("Appuyez sur \"F\" pour acheter");
-                playerHUD.SetTextUnderCrosshairVisibility(true);
+                playerHUDScript.SetTextUnderCrosshair("Appuyez sur \"F\" pour acheter");
+                playerHUDScript.SetTextUnderCrosshairVisibility(true);
             }
         }
         else
         {
-            playerHUD.SetTextUnderCrosshairVisibility(false);
+            playerHUDScript.SetTextUnderCrosshairVisibility(false);
         }
     }
 
@@ -265,19 +285,39 @@ public class PlayerScript : MonoBehaviour
             {
                 if(gunInHandScript.Shoot())
                 {
-                    playerHUD.ShowHitIndicator();
+                    playerHUDScript.ShowHitIndicator();
                 }
             }
         }
 
         if(Input.GetButtonDown("Menu"))
         {
-            Time.timeScale = gamePaused ? 1 : 0;
-            gamePaused = !gamePaused;
+            gcs.PauseControl();
+        }
+
+        if(Input.GetButtonDown("Reload"))
+        {
+            gunInHandScript.Reload();
         }
 
         LerpGun = Input.GetButton("Aiming") ? LerpGun + Time.deltaTime * aimSpeed : LerpGun - Time.deltaTime * aimSpeed;
         if (gunHold)
+        {
             gunHold.transform.position = Vector3.Lerp(shootingPos[0].position, shootingPos[1].position, LerpGun);
+        }
+    }
+
+    public void ShowPauseMenu()
+    {
+        playerHUD.enabled = !gcs.gamePaused;
+        pauseHUD.enabled = gcs.gamePaused;
+        Cursor.visible = gcs.gamePaused;
+        Cursor.lockState = gcs.gamePaused ? CursorLockMode.Confined : CursorLockMode.Locked;
+    }
+
+    public void AddRecoil(float recoilToAdd)
+    {
+        xRecoilRotation += recoilToAdd;
+        //xRotation -= recoilToAdd;
     }
 }

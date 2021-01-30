@@ -20,6 +20,14 @@ public class PlayerHUDScript : MonoBehaviour
     Text ZombieCount;
     [SerializeField]
     Text PlayerHealth;
+    [SerializeField]
+    Text round;
+    [SerializeField]
+    Text point;
+    [SerializeField]
+    Image hitImage;
+    [SerializeField]
+    Text GunAmmo;
 
     // Start is called before the first frame update
     void Start()
@@ -36,12 +44,14 @@ public class PlayerHUDScript : MonoBehaviour
             hitIndicator.SetActive(false);
         }
 
-        UpdateZombieCount();
+        UpdateGCSVariable();
     }
 
-    private void UpdateZombieCount()
+    private void UpdateGCSVariable()
     {
-        ZombieCount.text = gcs.getSpawnedZombieCount + " / " + gcs.getMaxZombie;
+        ZombieCount.text = gcs.SpawnedZombie.Count + " / " + gcs.MaxZombie;
+        round.text = gcs.getRound().ToString();
+        point.text = gcs.playerPoint.ToString();
     }
 
     public void SetCrosshair(Vector3 position = new Vector3())
@@ -80,5 +90,19 @@ public class PlayerHUDScript : MonoBehaviour
     public void UpdateHealth(int currHealth, int maxHealth)
     {
         PlayerHealth.text = currHealth + " / " + maxHealth;
+        hitImage.canvasRenderer.SetAlpha(.3f);
+        hitImage.color = Color.white;
+        hitImage.CrossFadeAlpha(0.0f, .5f, false);
+    }
+
+    public void UpdateGunAmmo(int maxAmmo, int remainingAmmo)
+    {
+        GunAmmo.text = remainingAmmo + " / " + maxAmmo;
+    }
+
+    public void UpdateGunAmmo(bool hasGunInHand, int maxAmmo, int remainingAmmo)
+    {
+        GunAmmo.enabled = hasGunInHand;
+        UpdateGunAmmo(maxAmmo, remainingAmmo);
     }
 }

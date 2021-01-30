@@ -13,12 +13,9 @@ public class ZombieScript : MonoBehaviour
     float timeBeforeGrowl;
     AudioSource audioSource;
     Animator animator;
+    GameControllerScript gcs;
 
-    bool isDead;
-    public bool IsDead
-    {
-        get { return isDead; }
-    }
+    public bool isDead { get; private set; }
 
     [SerializeField]
     int damage;
@@ -37,6 +34,7 @@ public class ZombieScript : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         animator = GetComponentInChildren<Animator>();
         timeBeforeGrowl = Time.time + Random.Range(5, 15);
+        gcs = (GameControllerScript)FindObjectOfType(typeof(GameControllerScript));
     }
 
     // Update is called once per frame
@@ -83,8 +81,10 @@ public class ZombieScript : MonoBehaviour
     {
         if (isDead)
             return false;
-        Debug.Log(bodyPart);
-        zombieHealth -= bodyPart == "Head" ? damage * 2 : damage;
+        bool isHeadshot = bodyPart == "Head";
+        int damageBasedOnBodyPart = isHeadshot ? damage * 2 : damage;
+        zombieHealth -= damageBasedOnBodyPart;
+
         if(zombieHealth <= 0)
         {
             zombieHealth = 0;
@@ -98,9 +98,12 @@ public class ZombieScript : MonoBehaviour
             timeBeforeDestroy = Time.time + 20;
             isDead = true;
 
-            GameControllerScript gcs = (GameControllerScript)FindObjectOfType(typeof(GameControllerScript));
             gcs.removeDeadZombieFromList(gameObject);
         }
+
+        int pointToAdd = Mathf.FloorToInt(damageBasedOnBodyPart * .5f);
+        pointToAdd += isHeadshot ? 5 : 0;
+        gcs.AddPointToPlayer(null, pointToAdd);
 
         return true;
     }
