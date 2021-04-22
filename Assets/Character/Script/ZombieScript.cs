@@ -29,6 +29,7 @@ public class ZombieScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        enabled = false;
         nav = GetComponent<NavMeshAgent>();
         player = GameObject.FindGameObjectWithTag("Player");
         audioSource = GetComponent<AudioSource>();
@@ -63,7 +64,7 @@ public class ZombieScript : MonoBehaviour
             {
                 if(Time.time > timeBeforeCanHit)
                 {
-                    player.GetComponent<PlayerScript>().TakeDamage(damage);
+                    player.GetComponent<old_PlayerScript>().TakeDamage(damage);
                     animator.SetBool("attack", true);
                     timeBeforeCanHit = Time.time + 1;
                 }

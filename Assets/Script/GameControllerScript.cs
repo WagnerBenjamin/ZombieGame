@@ -86,7 +86,7 @@ public class GameControllerScript : MonoBehaviour
         return round;
     }
 
-    public void AddPointToPlayer(PlayerScript player, int pointToAdd)
+    public void AddPointToPlayer(old_PlayerScript player, int pointToAdd)
     {
         playerPoint += pointToAdd;
     }
@@ -96,7 +96,7 @@ public class GameControllerScript : MonoBehaviour
         Time.timeScale = gamePaused ? 1 : 0;
         gamePaused = !gamePaused;
 
-        foreach(PlayerScript pScript in FindObjectsOfType(typeof(PlayerScript)))
+        foreach(old_PlayerScript pScript in FindObjectsOfType(typeof(old_PlayerScript)))
         {
             pScript.ShowPauseMenu();
         }

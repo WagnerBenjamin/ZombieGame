@@ -740,6 +740,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &7137956938472438241
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -769,6 +770,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f890e476616ff74c85ca366eb75c41c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  PlayerHUDPrefab: {fileID: 0}
   crosshair: {fileID: 3293948265943873042}
   textUnderCrosshair: {fileID: 4795404408464595793}
   hitIndicator: {fileID: 1863297960375633500}
@@ -1252,7 +1254,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8090982575624585703}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
   m_Name: 

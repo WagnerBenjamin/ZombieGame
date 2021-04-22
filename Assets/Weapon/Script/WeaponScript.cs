@@ -22,7 +22,7 @@ public class WeaponScript : MonoBehaviour
     }
     float nextFireTime;
     float spreadPercent;
-    PlayerScript owningPlayer;
+    PlayerControllerScript owningPlayer;
     bool isAiming;
     bool Reloading;
 
@@ -88,7 +88,7 @@ public class WeaponScript : MonoBehaviour
         if(Time.time > nextFireTime && AmmoLeft > 0 && !Reloading)
         {
             //Info de base du tir
-            Camera camToUse = isAiming ? SightCamera : owningPlayer.playerCamera;
+            Camera camToUse = isAiming ? SightCamera : owningPlayer.getPlayerCamera();
             Vector3 camCenter = camToUse.ScreenToWorldPoint(new Vector3(camToUse.pixelWidth * 0.5f, camToUse.pixelHeight * 0.5f));
             Vector3 shootDir = camToUse.transform.forward;
 
@@ -113,7 +113,7 @@ public class WeaponScript : MonoBehaviour
 
             if (isAiming)
             {
-                owningPlayer.AddRecoil(recoilAdd);
+                //owningPlayer.AddRecoil(recoilAdd);
             }
 
             AmmoLeft--;
@@ -153,7 +153,7 @@ public class WeaponScript : MonoBehaviour
         return spreadPercent;
     }
 
-    public void SetOwningPlayer(PlayerScript player)
+    public void SetOwningPlayer(PlayerControllerScript player)
     {
         owningPlayer = player;
     }

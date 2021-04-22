@@ -11,6 +11,9 @@ public class PlayerHUDScript : MonoBehaviour
     GameControllerScript gcs;
 
     [SerializeField]
+    private Canvas PlayerHUDPrefab;
+
+    [SerializeField]
     RectTransform crosshair;
     [SerializeField]
     Text textUnderCrosshair;
@@ -29,10 +32,14 @@ public class PlayerHUDScript : MonoBehaviour
     [SerializeField]
     Text GunAmmo;
 
+    private Canvas playerHUD;
+
     // Start is called before the first frame update
     void Start()
     {
+        playerHUD = Instantiate(PlayerHUDPrefab);
         gcs = (GameControllerScript)FindObjectOfType(typeof(GameControllerScript));
+        textUnderCrosshair.enabled = false;
     }
 
     // Update is called once per frame
